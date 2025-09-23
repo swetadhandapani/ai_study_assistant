@@ -10,7 +10,7 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/auth/verify-email/${token}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/${token}`)
       .then((res) => {
         setStatus("success");
         setMessage(res.data.message || "✅ Email verified successfully!");

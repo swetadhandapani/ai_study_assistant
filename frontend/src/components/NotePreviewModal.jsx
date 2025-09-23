@@ -49,14 +49,14 @@ export default function NotePreviewModal({ note, onClose }) {
               {isPDF ? (
                 <div className="w-full border rounded overflow-hidden">
                   <iframe
-                    src={`http://localhost:5000${note.fileUrl}`}
+                    src={`${import.meta.env.VITE_API_URL}${note.fileUrl}`}
                     className="w-full min-h-[400px] sm:min-h-[500px] h-[70vh]"
                     style={{ display: "block" }}
                     title="PDF Preview"
                   />
                   <div className="text-center mt-2">
                     <a
-                      href={`http://localhost:5000${note.fileUrl}`}
+                      href={`${import.meta.env.VITE_API_URL}${note.fileUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 underline"
@@ -67,7 +67,7 @@ export default function NotePreviewModal({ note, onClose }) {
                 </div>
               ) : isImage ? (
                 <img
-                  src={`http://localhost:5000${note.fileUrl}`}
+                  src={`${import.meta.env.VITE_API_URL}${note.fileUrl}`}
                   alt="Uploaded file"
                   className="w-full max-h-[400px] sm:max-h-[500px] object-contain rounded-md shadow"
                 />
@@ -76,7 +76,7 @@ export default function NotePreviewModal({ note, onClose }) {
                   {/*  Google Docs Viewer for Word/PPT */}
                   <iframe
                     src={`https://docs.google.com/viewer?url=${encodeURIComponent(
-                      `http://localhost:5000${note.fileUrl}`
+                      `${import.meta.env.VITE_API_URL}${note.fileUrl}`
                     )}&embedded=true`}
                     className="w-full min-h-[400px] sm:min-h-[500px] h-[70vh]"
                     style={{ display: "block" }}
@@ -84,7 +84,7 @@ export default function NotePreviewModal({ note, onClose }) {
                   />
                   <div className="text-center mt-2">
                     <a
-                      href={`http://localhost:5000${note.fileUrl}`}
+                      href={`${import.meta.env.VITE_API_URL}${note.fileUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 underline"
@@ -95,7 +95,7 @@ export default function NotePreviewModal({ note, onClose }) {
                 </div>
               ) : (
                 <a
-                  href={`http://localhost:5000${note.fileUrl}`}
+                  href={`${import.meta.env.VITE_API_URL}${note.fileUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 underline break-all"
