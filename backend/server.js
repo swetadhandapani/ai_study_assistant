@@ -17,6 +17,9 @@ app.use(express.json());
 // ✅ serve uploads folder so frontend can access file previews
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, "frontend", "dist")));
+
 // routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/notes', require('./routes/notes'));
