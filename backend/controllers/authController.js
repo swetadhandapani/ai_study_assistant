@@ -92,6 +92,7 @@ exports.register = async (req, res) => {
     });
 
     res.json({ message: "Verification email sent. Please check your inbox." });
+    res.redirect(`${process.env.CLIENT_URL}/verify-info`);
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
