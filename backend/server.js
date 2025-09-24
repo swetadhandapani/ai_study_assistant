@@ -18,7 +18,7 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve frontend static files
-app.use(express.static(path.join(__dirname, "frontend", "dist")));
+app.use(express.static(path.join(__dirname, "frontend")));
 
 // routes
 app.use('/api/auth', require('./routes/auth'));
@@ -29,7 +29,7 @@ app.use('/api/audio', require('./routes/audio'));
 app.get('/', (req, res) => res.send('AI Study Assistant backend running'));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+  res.sendFile(path.resolve(__dirname, "frontend", "index.html"));
 });
 
 
