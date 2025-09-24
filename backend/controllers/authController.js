@@ -40,6 +40,7 @@ const handleValidationErrors = (req, res) => {
       errors: errors.array().map((err) => ({ field: err.path, msg: err.msg })),
     });
   }
+   return false;
 };
 
 /**

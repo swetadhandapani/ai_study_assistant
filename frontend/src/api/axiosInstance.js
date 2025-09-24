@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://ai-study-assistant-pumn.onrender.com/';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://ai-study-assistant-pumn.onrender.com/api';
 
 const instance = axios.create({
   baseURL: API_BASE
