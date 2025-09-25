@@ -42,7 +42,7 @@ export default function AudioUploader() {
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/audio/transcribe`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/audio/transcribe`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
