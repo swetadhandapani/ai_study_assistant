@@ -583,7 +583,7 @@ exports.getProfile = async (req, res) => {
 /**
  * UPDATE PROFILE
  */
-const updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res) => {
   try {
     const { name, role, avatar } = req.body;
     const userId = req.user.id;
