@@ -583,14 +583,16 @@ exports.getProfile = async (req, res) => {
 /**
  * UPDATE PROFILE
  */
-exports.updateProfile = async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
     const { name, role, avatar } = req.body;
     const userId = req.user.id;
 
     const updateData = { name, role };
+
     if (req.file) {
-      updateData.avatar = `${process.env.SERVER_URL}/uploads/${req.file.filename}`;
+      // Full URL
+      updateData.avatar = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
     } else if (avatar === "null" || avatar === null) {
       updateData.avatar = null;
     }
@@ -598,8 +600,10 @@ exports.updateProfile = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
     });
+
     res.json({ message: "Profile updated", user: updatedUser });
   } catch (err) {
     res.status(500).json({ message: "Update failed", error: err.message });
   }
 };
+
