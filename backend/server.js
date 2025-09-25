@@ -23,7 +23,7 @@ app.use('/api/notes', require('./routes/notes'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/audio', require('./routes/audio'));
 
-app.get('/', (req, res) => res.send('AI Study Assistant backend running'));
+//app.get('/', (req, res) => res.send('AI Study Assistant backend running'));
 
 // ✅ Serve frontend static files
 app.use(express.static(path.join(__dirname, "frontend")));
