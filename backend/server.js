@@ -17,9 +17,6 @@ app.use(express.json());
 // ✅ serve uploads folder so frontend can access file previews
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Serve frontend static files
-app.use(express.static(path.join(__dirname, "frontend")));
-
 // routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/notes', require('./routes/notes'));
@@ -28,10 +25,13 @@ app.use('/api/audio', require('./routes/audio'));
 
 app.get('/', (req, res) => res.send('AI Study Assistant backend running'));
 
+// ✅ Serve frontend static files
+app.use(express.static(path.join(__dirname, "frontend")));
+
+// ✅ SPA Fallback (React Router)
 app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "frontend", "index.html"));
 });
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
