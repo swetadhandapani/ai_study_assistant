@@ -26,11 +26,11 @@ app.use('/api/audio', require('./routes/audio'));
 //app.get('/', (req, res) => res.send('AI Study Assistant backend running'));
 
 // ✅ Serve frontend static files
-app.use(express.static(path.join(__dirname, "frontend")));
+app.use(express.static(path.join(__dirname, "public")));
 
 // ✅ SPA Fallback (React Router)
 app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "frontend", "index.html"));
+  res.sendFile(path.resolve(__dirname, "public", "index.html"));
 });
 
 const PORT = process.env.PORT || 5000;
