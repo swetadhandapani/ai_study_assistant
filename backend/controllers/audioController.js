@@ -5,6 +5,13 @@ const { Groq } = require("groq-sdk");
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// helper → always build file URL
+const buildFileUrl = (req, filePath) => {
+  if (!filePath) return null;
+  const filename = path.basename(filePath);
+  return `${req.protocol}://${req.get("host")}/api/uploads/${filename}`;
+};
+
 // Upload + transcribe audio (initial upload)
 exports.uploadAudio = async (req, res) => {
   try {
@@ -21,12 +28,12 @@ exports.uploadAudio = async (req, res) => {
       user: req.user._id,
       title: req.body.title || "Untitled Audio",
       filePath: req.file.path,
-      fileUrl: `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`,
+      fileUrl: buildFileUrl(req, req.file.path),
       transcription: transcription.text,
     });
     await audioNote.save();
 
-    res.json(audioNote);
+    res.json(audioNote.toObject());
   } catch (err) {
     console.error("Error in uploadAudio:", err);
     res.status(500).json({ message: "Server error while uploading audio" });
@@ -39,10 +46,7 @@ exports.getAudios = async (req, res) => {
     const audios = await AudioNote.find({ user: req.user._id }).sort({ createdAt: -1 });
     const transformed = audios.map((a) => {
       const obj = a.toObject();
-      if (!obj.fileUrl && obj.filePath) {
-        const filename = path.basename(obj.filePath);
-        obj.fileUrl = `${req.protocol}://${req.get("host")}/uploads/${filename}`;
-      }
+      obj.fileUrl = buildFileUrl(req, obj.filePath);
       return obj;
     });
     res.json(transformed);
@@ -59,10 +63,7 @@ exports.getAudio = async (req, res) => {
     if (!audio) return res.status(404).json({ message: "Not found" });
 
     const obj = audio.toObject();
-    if (!obj.fileUrl && obj.filePath) {
-      const filename = path.basename(obj.filePath);
-      obj.fileUrl = `${req.protocol}://${req.get("host")}/uploads/${filename}`;
-    }
+    obj.fileUrl = buildFileUrl(req, obj.filePath);
     res.json(obj);
   } catch (err) {
     console.error("Error in getAudio:", err);
@@ -70,9 +71,7 @@ exports.getAudio = async (req, res) => {
   }
 };
 
-
-// Update title and optionally replace audio file (multipart/form-data).
-// If a new file is uploaded, we re-transcribe it and update transcription.
+// Update title and optionally replace audio file
 exports.updateAudio = async (req, res) => {
   try {
     const audio = await AudioNote.findById(req.params.id);
@@ -86,7 +85,7 @@ exports.updateAudio = async (req, res) => {
 
     if (req.file) {
       audio.filePath = req.file.path;
-      audio.fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+      audio.fileUrl = buildFileUrl(req, req.file.path);
 
       try {
         const transcription = await groq.audio.transcriptions.create({
@@ -102,13 +101,15 @@ exports.updateAudio = async (req, res) => {
 
     await audio.save();
 
-    res.json(audio.toObject());
+    const obj = audio.toObject();
+    obj.fileUrl = buildFileUrl(req, obj.filePath);
+
+    res.json(obj);
   } catch (err) {
     console.error("Error in updateAudio:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 // Delete audio note
 exports.deleteAudio = async (req, res) => {
@@ -121,9 +122,6 @@ exports.deleteAudio = async (req, res) => {
     if (audio.user.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: "Not authorized" });
     }
-
-    // Optionally delete file from disk:
-    // try { if (audio.filePath && fs.existsSync(audio.filePath)) fs.unlinkSync(audio.filePath); } catch (e) { console.warn("Failed to delete file:", e.message); }
 
     await audio.deleteOne();
     res.json({ message: "Audio note deleted" });
@@ -155,4 +153,3 @@ exports.translateTranscript = async (req, res) => {
     res.status(500).json({ message: "Error translating transcript" });
   }
 };
-
