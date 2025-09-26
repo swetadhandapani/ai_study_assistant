@@ -11,7 +11,7 @@ export default function ResendVerification() {
     setLoading(true);
     setMessage("");
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/resend-verification`, { email });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/resend-verification`, { email });
       setMessage(res.data.message || "Verification email sent!");
     } catch (err) {
       setMessage("❌ Failed to send verification email. Try again.");

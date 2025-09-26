@@ -10,7 +10,7 @@ export default function VerifyEmail() {
 
  useEffect(() => {
   axios
-    .get(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/${token}`)
+    .get(`${import.meta.env.VITE_API_URL}/auth/verify-email/${token}`)
     .then((res) => {
       if (res.data.user && res.data.token) {
         // Store full session
