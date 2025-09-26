@@ -254,50 +254,52 @@ exports.resetPassword = async (req, res) => {
 exports.verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
-    if (!token)
+    if (!token) {
       return res.status(400).json({ message: "Verification token missing" });
+    }
 
+    // Hash the incoming token (same way it was stored in DB)
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-    // Find user and ensure token is not expired
+    // Find matching user
     const user = await User.findOne({
       verificationToken: hashedToken,
       verificationExpires: { $gt: Date.now() },
     });
 
-    if (!user)
+    if (!user) {
       return res.status(400).json({
-        message:
-          "Invalid or expired token. Please request a new verification email.",
+        message: "Invalid or expired token. Please request a new verification email.",
       });
+    }
 
-    // Mark email verified
+    // ✅ Mark verified
     user.isVerified = true;
     user.verificationToken = undefined;
     user.verificationExpires = undefined;
     await user.save();
 
     // ✅ Generate JWT immediately
-    const tokenJWT = generateToken(user._id);
+    const jwtToken = generateToken(user._id);
 
-    // Return user data + token for immediate login
-    res.json({
+    return res.json({
       message: "✅ Email verified successfully! You are now logged in.",
       user: {
         id: user._id,
         email: user.email,
         name: user.name,
-        isVerified: user.isVerified,
+        isVerified: true,
         role: user.role,
         avatar: user.avatar || null,
       },
-      token: tokenJWT,
+      token: jwtToken,
     });
   } catch (err) {
     console.error("Email verification error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 /**
  * RESEND VERIFICATION EMAIL
