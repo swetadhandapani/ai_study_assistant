@@ -1,36 +1,48 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function VerifyEmail() {
   const { token } = useParams();
   const [status, setStatus] = useState("loading");
-  const [message, setMessage] = useState("Verifying your email...");
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/auth/verify-email/${token}`)
-      .then((res) => {
+    const verifyEmail = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/auth/verify-email/${token}`
+        );
+
         if (res.data.success) {
-          setMessage("✅ Email verified successfully! Please login.");
           setStatus("success");
-          // Show toast instead of logging in
+          toast.success("✅ Email verified successfully! Redirecting to login...");
           localStorage.setItem("emailVerified", "true");
+
+          // Redirect after 3 seconds
           setTimeout(() => navigate("/"), 3000);
         } else {
-          setMessage("⚠️ Verification failed. Please try logging in.");
           setStatus("error");
+          toast.error(
+            res.data.message || "⚠️ Verification failed. Please try again."
+          );
         }
-      })
-      .catch((err) => {
-        setMessage(err.response?.data?.message || "❌ Verification failed");
+      } catch (err) {
         setStatus("error");
-      });
+        toast.error(
+          err.response?.data?.message || "❌ Verification failed. Try again."
+        );
+      }
+    };
+
+    verifyEmail();
   }, [token, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
+      <ToastContainer position="top-center" autoClose={3000} />
       <div className="bg-white shadow-lg rounded-2xl p-8 text-center max-w-md w-full">
         {status === "loading" && (
           <div>
@@ -46,9 +58,8 @@ export default function VerifyEmail() {
             <h2 className="text-2xl font-bold text-green-600 mb-2">
               🎉 Verification Successful!
             </h2>
-            <p className="text-sm text-gray-600">{message}</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Redirecting to your login...
+            <p className="text-sm text-gray-600">
+              Your email is verified. Redirecting to login...
             </p>
           </div>
         )}
@@ -58,7 +69,9 @@ export default function VerifyEmail() {
             <h2 className="text-2xl font-bold text-red-600 mb-2">
               ❌ Verification Failed
             </h2>
-            <p className="text-sm text-gray-600">{message}</p>
+            <p className="text-sm text-gray-600">
+              Please try again or resend verification email.
+            </p>
             <Link
               to="/resend-verification"
               className="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
