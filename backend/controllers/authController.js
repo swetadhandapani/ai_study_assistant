@@ -591,8 +591,8 @@ exports.updateProfile = async (req, res) => {
     const updateData = { name, role };
 
     if (req.file) {
-      // Full URL
-      updateData.avatar = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+     // Store relative path (not full host) so frontend can prepend VITE_API_URL
+      updateData.avatar =  `/api/uploads/${req.file.filename}`;
     } else if (avatar === "null" || avatar === null) {
       updateData.avatar = null;
     }
