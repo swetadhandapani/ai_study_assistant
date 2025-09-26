@@ -268,10 +268,15 @@ exports.verifyEmail = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({
-        message: "Invalid or expired token. Please request a new verification email.",
-      });
-    }
+  const existingUser = await User.findOne({ verificationToken: hashedToken });
+  if (existingUser?.isVerified) {
+    return res.json({ success: true, message: "Email already verified" });
+  }
+  return res.status(400).json({
+    message: "Invalid or expired token. Please request a new verification email.",
+  });
+}
+
 
     // ✅ Mark verified
     user.isVerified = true;
@@ -283,6 +288,7 @@ exports.verifyEmail = async (req, res) => {
     const jwtToken = generateToken(user._id);
 
     return res.json({
+      success: true,
       message: "✅ Email verified successfully! You are now logged in.",
       user: {
         id: user._id,
