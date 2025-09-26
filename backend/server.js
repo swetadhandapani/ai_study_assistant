@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // ✅ serve uploads folder so frontend can access file previews
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // routes
 app.use('/api/auth', require('./routes/auth'));

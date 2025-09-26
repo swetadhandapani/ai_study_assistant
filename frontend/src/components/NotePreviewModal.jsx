@@ -98,6 +98,7 @@ export default function NotePreviewModal({ note, onClose }) {
                   href={`${import.meta.env.VITE_API_URL}${note.fileUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  download
                   className="text-blue-600 underline break-all"
                 >
                   Download {note.fileUrl.split("/").pop()}

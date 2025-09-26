@@ -11,7 +11,7 @@ exports.uploadNote = async (req, res) => {
 
     if (req.file) {
       const filePath = req.file.path;
-      fileUrl = `/api/uploads/${req.file.filename}`;
+      fileUrl = `/uploads/${req.file.filename}`;
 
       try {
         if (filePath.endsWith(".pdf")) {
@@ -82,7 +82,7 @@ exports.updateNote = async (req, res) => {
 
     if (req.file) {
       const filePath = req.file.path;
-      note.fileUrl = `api/uploads/${req.file.filename}`;
+      note.fileUrl = `uploads/${req.file.filename}`;
 
       try {
         if (filePath.endsWith(".pdf")) {
