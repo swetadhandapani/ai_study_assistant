@@ -17,7 +17,7 @@ export default function VerifyEmail() {
           setStatus("success");
           // Show toast instead of logging in
           localStorage.setItem("emailVerified", "true");
-          setTimeout(() => navigate("/"), 1500);
+          setTimeout(() => navigate("/"), 3000);
         } else {
           setMessage("⚠️ Verification failed. Please try logging in.");
           setStatus("error");
