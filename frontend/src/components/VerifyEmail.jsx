@@ -4,7 +4,7 @@ import axios from "axios";
 
 export default function VerifyEmail() {
   const { token } = useParams();
-  const [status, setStatus] = useState("loading"); 
+  const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Verifying your email...");
   const navigate = useNavigate();
 
@@ -12,12 +12,19 @@ export default function VerifyEmail() {
     axios
       .get(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/${token}`)
       .then((res) => {
+        // ✅ Store full user info + token from backend
+        if (res.data.token) {
+          localStorage.setItem("userInfo", JSON.stringify(res.data));
+        }
+
         setStatus("success");
         setMessage(res.data.message || "✅ Email verified successfully!");
-        +localStorage.setItem("emailVerified", "true"); // store flag
-        setTimeout(() => navigate("/"), 3000);
+
+        // Redirect after 3s
+        setTimeout(() => navigate("/dashboard"), 3000);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error(err);
         setStatus("error");
         setMessage("❌ Verification failed or token expired.");
       });
@@ -42,7 +49,7 @@ export default function VerifyEmail() {
             </h2>
             <p className="text-sm text-gray-600">{message}</p>
             <p className="text-sm text-gray-400 mt-2">
-              Redirecting to login...
+              Redirecting to your dashboard...
             </p>
           </div>
         )}
