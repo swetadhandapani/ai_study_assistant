@@ -14,13 +14,9 @@ export default function AuthPage() {
 
   // 🔑 Check if user just verified via email link
   useEffect(() => {
-    const storedUser = localStorage.getItem("userInfo");
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      if (parsed?.user?.isVerified) {
-        toast.success("🎉 Your email has been verified & you are logged in!");
-        setTimeout(() => (window.location.href = "/dashboard"), 1200);
-      }
+    if (localStorage.getItem("emailVerified") === "true") {
+      toast.success("🎉 Email verified successfully! Please login.");
+      localStorage.removeItem("emailVerified");
     }
   }, []);
 
@@ -30,7 +26,9 @@ export default function AuthPage() {
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{1,25}$/;
 
     if (!emailRegex.test(email)) {
-      toast.error("⚠️ Only valid Gmail addresses are allowed (name@gmail.com).");
+      toast.error(
+        "⚠️ Only valid Gmail addresses are allowed (name@gmail.com)."
+      );
       return false;
     }
     if (!passwordRegex.test(password)) {
@@ -74,7 +72,7 @@ export default function AuthPage() {
       if (res.data.user?.isVerified) {
         localStorage.setItem("userInfo", JSON.stringify(res.data));
         toast.success("🎉 Login successful!");
-        setTimeout(() => (window.location.href = "/dashboard"), 1200);
+        setTimeout(() => (window.location.href = "/upload"), 1200);
       } else {
         toast.error("⚠️ Please verify your email before logging in.");
       }
@@ -157,9 +155,7 @@ export default function AuthPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600">
-            {isRegister
-              ? "Already have an account?"
-              : "Don't have an account?"}{" "}
+            {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
             <button
               onClick={() => setIsRegister(!isRegister)}
               className="text-purple-600 font-semibold hover:underline"

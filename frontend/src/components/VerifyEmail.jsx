@@ -8,28 +8,26 @@ export default function VerifyEmail() {
   const [message, setMessage] = useState("Verifying your email...");
   const navigate = useNavigate();
 
- useEffect(() => {
-  axios
-    .get(`${import.meta.env.VITE_API_URL}/auth/verify-email/${token}`)
-    .then((res) => {
-      if (res.data.user && res.data.token) {
-        // Store full session
-        localStorage.setItem("userInfo", JSON.stringify(res.data));
-        setMessage("✅ Email verified successfully! Redirecting...");
-        setStatus("success");
-
-        setTimeout(() => navigate("/"), 1500);
-      } else {
-        setMessage("⚠️ Verification failed. Please try logging in.");
+  useEffect(() => {
+    axios
+      .get(`${import.meta.env.VITE_API_URL}/auth/verify-email/${token}`)
+      .then((res) => {
+        if (res.data.success) {
+          setMessage("✅ Email verified successfully! Please login.");
+          setStatus("success");
+          // Show toast instead of logging in
+          localStorage.setItem("emailVerified", "true");
+          setTimeout(() => navigate("/"), 1500);
+        } else {
+          setMessage("⚠️ Verification failed. Please try logging in.");
+          setStatus("error");
+        }
+      })
+      .catch((err) => {
+        setMessage(err.response?.data?.message || "❌ Verification failed");
         setStatus("error");
-      }
-    })
-    .catch((err) => {
-      setMessage(err.response?.data?.message || "❌ Verification failed");
-      setStatus("error");
-    });
-}, [token, navigate]);
-
+      });
+  }, [token, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
@@ -50,7 +48,7 @@ export default function VerifyEmail() {
             </h2>
             <p className="text-sm text-gray-600">{message}</p>
             <p className="text-sm text-gray-400 mt-2">
-              Redirecting to your dashboard...
+              Redirecting to your login...
             </p>
           </div>
         )}
