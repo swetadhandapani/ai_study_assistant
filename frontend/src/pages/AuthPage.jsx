@@ -12,15 +12,19 @@ export default function AuthPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  //  Check if user has just verified email
+  // 🔑 Check if user just verified via email link
   useEffect(() => {
-    if (localStorage.getItem("emailVerified") === "true") {
-      toast.success("🎉 Your email has been verified! Please log in.");
-      localStorage.removeItem("emailVerified");
+    const storedUser = localStorage.getItem("userInfo");
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      if (parsed?.user?.isVerified) {
+        toast.success("🎉 Your email has been verified & you are logged in!");
+        setTimeout(() => (window.location.href = "/dashboard"), 1200);
+      }
     }
   }, []);
 
-   const validateInputs = () => {
+  const validateInputs = () => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     const passwordRegex =
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{1,25}$/;
@@ -38,55 +42,46 @@ export default function AuthPage() {
     return true;
   };
 
-const handleAuth = async (e) => {
-  e.preventDefault();
-  if (!validateInputs()) return;
-  try {
-    const url = isRegister ? "/auth/register" : "/auth/login";
-    const res = await api.post(
-      url,
-      isRegister ? { name, email, password } : { email, password }
-    );
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    if (!validateInputs()) return;
 
-    if (isRegister) {
-      toast.info("✅ Registered! Please check your email to verify before logging in.");
-      setTimeout(() => (window.location.href = "/verify-info"), 1500);
-    } else {
-      // ✅ Step 1: If backend says 2FA is required
+    try {
+      const url = isRegister ? "/auth/register" : "/auth/login";
+      const res = await api.post(
+        url,
+        isRegister ? { name, email, password } : { email, password }
+      );
+
+      if (isRegister) {
+        toast.info(
+          "✅ Registered! Please check your email to verify your account."
+        );
+        setTimeout(() => (window.location.href = "/verify-info"), 1500);
+        return;
+      }
+
+      // 🛡️ 2FA required
       if (res.data.requires2FA) {
-        localStorage.setItem("pending2FAEmail", email); // save for Verify2FA.jsx
-        localStorage.setItem("pending2FAMethod", res.data.method); // "email" or "totp"
-        toast.info("🔐 Please enter the 2FA code sent to your email.");
+        localStorage.setItem("pending2FAEmail", email);
+        localStorage.setItem("pending2FAMethod", res.data.method);
+        toast.info("🔐 Please enter the 2FA code.");
         setTimeout(() => (window.location.href = "/verify-2fa"), 1000);
         return;
       }
 
-      // ✅ Step 2: If user exists but not verified
-      if (!res.data.user?.isVerified) {
+      // ✅ Already verified OR just verified through backend
+      if (res.data.user?.isVerified) {
+        localStorage.setItem("userInfo", JSON.stringify(res.data));
+        toast.success("🎉 Login successful!");
+        setTimeout(() => (window.location.href = "/dashboard"), 1200);
+      } else {
         toast.error("⚠️ Please verify your email before logging in.");
-        return;
       }
-
-      // ✅ Step 3: Store token temporarily
-      localStorage.setItem("token", res.data.token);
-
-      // ✅ Step 4: Always fetch a fresh profile (so user state is consistent)
-      const profileRes = await api.get("/auth/profile", {
-        headers: { Authorization: `Bearer ${res.data.token}` },
-      });
-
-      const freshUser = profileRes.data.user;
-      localStorage.setItem("user", JSON.stringify(freshUser));
-
-      // ✅ Step 5: Success → redirect
-      toast.success("🎉 Login successful!");
-      setTimeout(() => (window.location.href = "/upload"), 1200);
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message);
     }
-  } catch (err) {
-    toast.error(err.response?.data?.message || err.message);
-  }
-};
-
+  };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -144,7 +139,7 @@ const handleAuth = async (e) => {
               </button>
             </div>
 
-            {/* Forgot Password Link (only on Login mode) */}
+            {/* Forgot Password Link */}
             {!isRegister && (
               <div className="mt-2 text-right">
                 <Link to="/forgot-password" className="text-blue-600 text-sm">
@@ -162,7 +157,9 @@ const handleAuth = async (e) => {
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600">
-            {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
+            {isRegister
+              ? "Already have an account?"
+              : "Don't have an account?"}{" "}
             <button
               onClick={() => setIsRegister(!isRegister)}
               className="text-purple-600 font-semibold hover:underline"
