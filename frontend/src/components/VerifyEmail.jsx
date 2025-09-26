@@ -8,27 +8,28 @@ export default function VerifyEmail() {
   const [message, setMessage] = useState("Verifying your email...");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/${token}`)
-      .then((res) => {
-        // ✅ Store full user info + token from backend
-        if (res.data.token) {
-          localStorage.setItem("userInfo", JSON.stringify(res.data));
-        }
-
+ useEffect(() => {
+  axios
+    .get(`${import.meta.env.VITE_API_URL}/api/auth/verify-email/${token}`)
+    .then((res) => {
+      if (res.data.user && res.data.token) {
+        // Store full session
+        localStorage.setItem("userInfo", JSON.stringify(res.data));
+        setMessage("✅ Email verified successfully! Redirecting...");
         setStatus("success");
-        setMessage(res.data.message || "✅ Email verified successfully!");
 
-        // Redirect after 3s
-        setTimeout(() => navigate("/dashboard"), 3000);
-      })
-      .catch((err) => {
-        console.error(err);
+        setTimeout(() => navigate("/dashboard"), 1500);
+      } else {
+        setMessage("⚠️ Verification failed. Please try logging in.");
         setStatus("error");
-        setMessage("❌ Verification failed or token expired.");
-      });
-  }, [token, navigate]);
+      }
+    })
+    .catch((err) => {
+      setMessage(err.response?.data?.message || "❌ Verification failed");
+      setStatus("error");
+    });
+}, [token, navigate]);
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
