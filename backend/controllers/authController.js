@@ -248,30 +248,53 @@ exports.resetPassword = async (req, res) => {
 };
 
 
-
 /**
  * VERIFY EMAIL
  */
 exports.verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({ message: "Verification token missing" });
+    }
+
+    // Hash the token to match DB
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
+    // Find user by hashed token and ensure token is not expired
     const user = await User.findOne({
       verificationToken: hashedToken,
       verificationExpires: { $gt: Date.now() },
     });
 
-    if (!user)
-      return res.status(400).json({ message: "Invalid or expired token" });
+    if (!user) {
+      return res.status(400).json({
+        message:
+          "Invalid or expired token. Please request a new verification email.",
+      });
+    }
 
+    // Update verification status
     user.isVerified = true;
     user.verificationToken = undefined;
     user.verificationExpires = undefined;
+
     await user.save();
 
-    res.json({ message: "Email verified successfully. You can now log in." });
+    // Success response
+    res.json({
+      message: "✅ Email verified successfully! You can now log in.",
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        isVerified: user.isVerified,
+        role: user.role,
+      },
+    });
   } catch (err) {
+    console.error("Email verification error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
