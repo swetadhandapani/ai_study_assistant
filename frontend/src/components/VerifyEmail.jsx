@@ -18,7 +18,7 @@ export default function VerifyEmail() {
         setMessage("✅ Email verified successfully! Redirecting...");
         setStatus("success");
 
-        setTimeout(() => navigate("/dashboard"), 1500);
+        setTimeout(() => navigate("/"), 1500);
       } else {
         setMessage("⚠️ Verification failed. Please try logging in.");
         setStatus("error");
