@@ -40,7 +40,7 @@ const handleValidationErrors = (req, res) => {
       errors: errors.array().map((err) => ({ field: err.path, msg: err.msg })),
     });
   }
-   return false;
+  return false;
 };
 
 /**
@@ -247,7 +247,6 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-
 /**
  * VERIFY EMAIL
  */
@@ -268,15 +267,17 @@ exports.verifyEmail = async (req, res) => {
     });
 
     if (!user) {
-  const existingUser = await User.findOne({ verificationToken: hashedToken });
-  if (existingUser?.isVerified) {
-    return res.json({ success: true, message: "Email already verified" });
-  }
-  return res.status(400).json({
-    message: "Invalid or expired token. Please request a new verification email.",
-  });
-}
-
+      const existingUser = await User.findOne({
+        verificationToken: hashedToken,
+      });
+      if (existingUser?.isVerified) {
+        return res.json({ success: true, message: "Email already verified" });
+      }
+      return res.status(400).json({
+        message:
+          "Invalid or expired token. Please request a new verification email.",
+      });
+    }
 
     // ✅ Mark verified
     user.isVerified = true;
@@ -305,7 +306,6 @@ exports.verifyEmail = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
 
 /**
  * RESEND VERIFICATION EMAIL
@@ -347,7 +347,6 @@ exports.resendVerification = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
 
 /**
  * VERIFY 2FA EMAIL
@@ -619,22 +618,26 @@ exports.updateProfile = async (req, res) => {
     const { name, role, avatar } = req.body;
     const userId = req.user.id;
 
-    const updateData = { name, role };
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (role) updateData.role = role;
 
+    // Handle avatar updates
     if (req.file) {
-     // Store relative path (not full host) so frontend can prepend VITE_API_URL
-      updateData.avatar =  `/api/uploads/${req.file.filename}`;
-    } else if (avatar === "null" || avatar === null) {
+      updateData.avatar = `/api/uploads/${req.file.filename}`;
+    } else if (avatar === null || avatar === "null") {
       updateData.avatar = null;
+    } else if (avatar) {
+      updateData.avatar = avatar;
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
-    });
+    }).select("-password");
 
-    res.json({ message: "Profile updated", user: updatedUser });
+    res.json({ message: "Profile updated successfully", user: updatedUser });
   } catch (err) {
+    console.error("Update profile error:", err);
     res.status(500).json({ message: "Update failed", error: err.message });
   }
 };
-

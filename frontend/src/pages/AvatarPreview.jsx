@@ -1,11 +1,13 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Download, ArrowLeft } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function AvatarPreview() {
   const location = useLocation();
   const navigate = useNavigate();
-  const imageUrl = location.state?.avatar;
+  const imageUrl =
+    location.state?.avatar || JSON.parse(localStorage.getItem("user"))?.avatar;
   const name = location.state?.name || "profile";
 
   if (!imageUrl) {
@@ -16,23 +18,26 @@ export default function AvatarPreview() {
     );
   }
 
-  const handleDownload = () => {
-    fetch(imageUrl)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${name}-avatar.png`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      });
+  const handleDownload = async () => {
+    try {
+      const res = await fetch(imageUrl);
+      if (!res.ok) throw new Error("Failed to download image");
+      const blob = await res.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${name}-avatar.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
       <div className="relative max-w-2xl w-full bg-white shadow-lg rounded-lg p-6">
-        {/* ✅ Back Button */}
+        {/* Back Button */}
         <div className="absolute top-4 left-4">
           <button
             onClick={() => navigate(-1)}
@@ -62,3 +67,6 @@ export default function AvatarPreview() {
     </div>
   );
 }
+
+
+ 

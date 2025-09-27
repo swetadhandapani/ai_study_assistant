@@ -26,6 +26,14 @@ export default function Profile() {
     const storedUser = localStorage.getItem("user");
     if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
       const parsed = JSON.parse(storedUser);
+
+      // ✅ Make avatar URL absolute
+      if (parsed.avatar && !parsed.avatar.startsWith("http")) {
+        parsed.avatar = `${
+          process.env.VITE_API_URL || "http://localhost:5000"
+        }${parsed.avatar}`;
+      }
+
       setUser(parsed);
       setFormData({
         name: parsed.name,
@@ -54,8 +62,16 @@ export default function Profile() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setUser(res.data.user);
+      // Normalize avatar URL
+      const updatedUser = res.data.user;
+      if (updatedUser.avatar && !updatedUser.avatar.startsWith("http")) {
+        updatedUser.avatar = `${
+          process.env.VITE_API_URL || "http://localhost:5000"
+        }${updatedUser.avatar}`;
+      }
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
       window.dispatchEvent(new Event("storage"));
       toast.success("Profile updated!");
       setIsEditing(false);
@@ -74,8 +90,10 @@ export default function Profile() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setUser(res.data.user);
+      const updatedUser = res.data.user;
+      updatedUser.avatar = null; // ensure null
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
       setFormData({ ...formData, avatar: null, avatarName: "" });
       window.dispatchEvent(new Event("storage"));
       toast.success("Profile picture removed!");
@@ -85,36 +103,35 @@ export default function Profile() {
   };
 
   // ---------- Enable 2FA ----------
-const enable2FA = async (method) => {
-  try {
-    const token = localStorage.getItem("token");
-    if (method === "email") {
-      const res = await api.put(
-        "/auth/toggle-2fa",
-        { enable: true, method: "email" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setUser(res.data.user);
-      toast.success("📧 Email OTP 2FA enabled!");
-      setShow2FAModal(false);
-    } else if (method === "totp") {
-      const res = await api.post(
-        "/auth/enable-totp",
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  const enable2FA = async (method) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (method === "email") {
+        const res = await api.put(
+          "/auth/toggle-2fa",
+          { enable: true, method: "email" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        setUser(res.data.user);
+        toast.success("📧 Email OTP 2FA enabled!");
+        setShow2FAModal(false);
+      } else if (method === "totp") {
+        const res = await api.post(
+          "/auth/enable-totp",
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      setQrCode(res.data.qrCodeUrl);
-      setSecret(res.data.secret);
-      setShowVerifyStep(true);
-      toast.info("Scan QR in your Authenticator App!");
+        setQrCode(res.data.qrCodeUrl);
+        setSecret(res.data.secret);
+        setShowVerifyStep(true);
+        toast.info("Scan QR in your Authenticator App!");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "2FA setup failed");
     }
-  } catch (err) {
-    toast.error(err.response?.data?.message || "2FA setup failed");
-  }
-};
-
+  };
 
   // ---------- Verify TOTP (final step) ----------
   const verifyTOTP = async () => {
@@ -122,7 +139,7 @@ const enable2FA = async (method) => {
       const token = localStorage.getItem("token");
       const res = await api.post(
         "/auth/verify-totp",
-        { email: user.email,code: totpCode },
+        { email: user.email, code: totpCode },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -360,10 +377,16 @@ const enable2FA = async (method) => {
                 }
                 className="w-full"
               />
-              {formData.avatarName && (
-                <p className="text-sm text-gray-600">
-                  Selected file: {formData.avatarName}
-                </p>
+              {formData.avatar && (
+                <img
+                  src={
+                    typeof formData.avatar === "string"
+                      ? formData.avatar
+                      : URL.createObjectURL(formData.avatar)
+                  }
+                  alt="Preview"
+                  className="w-24 h-24 rounded-full object-cover mx-auto mt-2"
+                />
               )}
 
               {user.avatar && (
