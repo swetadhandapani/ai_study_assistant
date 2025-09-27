@@ -9,7 +9,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [show2FAModal, setShow2FAModal] = useState(false);
 
-  // 2FA setup states
+  // 2FA states
   const [qrCode, setQrCode] = useState(null);
   const [secret, setSecret] = useState(null);
   const [totpCode, setTotpCode] = useState("");
@@ -22,18 +22,18 @@ export default function Profile() {
     avatarName: "",
   });
 
+  const normalizeAvatar = (u) => {
+    if (!u) return null;
+    if (u.avatar && !u.avatar.startsWith("http")) {
+      u.avatar = `${process.env.VITE_API_URL || "http://localhost:5000"}${u.avatar}`;
+    }
+    return u;
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
-      const parsed = JSON.parse(storedUser);
-
-      // ✅ Make avatar URL absolute
-      if (parsed.avatar && !parsed.avatar.startsWith("http")) {
-        parsed.avatar = `${
-          process.env.VITE_API_URL || "http://localhost:5000"
-        }${parsed.avatar}`;
-      }
-
+      const parsed = normalizeAvatar(JSON.parse(storedUser));
       setUser(parsed);
       setFormData({
         name: parsed.name,
@@ -62,17 +62,10 @@ export default function Profile() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Normalize avatar URL
-      const updatedUser = res.data.user;
-      if (updatedUser.avatar && !updatedUser.avatar.startsWith("http")) {
-        updatedUser.avatar = `${
-          process.env.VITE_API_URL || "http://localhost:5000"
-        }${updatedUser.avatar}`;
-      }
-
+      const updatedUser = normalizeAvatar(res.data.user);
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("storage")); // Sync Navbar
       toast.success("Profile updated!");
       setIsEditing(false);
     } catch (err) {
@@ -91,11 +84,11 @@ export default function Profile() {
       );
 
       const updatedUser = res.data.user;
-      updatedUser.avatar = null; // ensure null
+      updatedUser.avatar = null;
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
       setFormData({ ...formData, avatar: null, avatarName: "" });
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("storage")); // Sync Navbar
       toast.success("Profile picture removed!");
     } catch (err) {
       toast.error(err.response?.data?.message || "Remove failed");
@@ -122,7 +115,6 @@ export default function Profile() {
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         setQrCode(res.data.qrCodeUrl);
         setSecret(res.data.secret);
         setShowVerifyStep(true);
@@ -133,7 +125,7 @@ export default function Profile() {
     }
   };
 
-  // ---------- Verify TOTP (final step) ----------
+  // ---------- Verify TOTP ----------
   const verifyTOTP = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -145,6 +137,7 @@ export default function Profile() {
 
       localStorage.setItem("user", JSON.stringify(res.data.user));
       setUser(res.data.user);
+      window.dispatchEvent(new Event("storage")); // Sync Navbar
       toast.success("🔑 Authenticator App 2FA enabled!");
       setShow2FAModal(false);
       setQrCode(null);
@@ -165,9 +158,9 @@ export default function Profile() {
         { enable: false },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       localStorage.setItem("user", JSON.stringify(res.data.user));
       setUser(res.data.user);
+      window.dispatchEvent(new Event("storage")); // Sync Navbar
       toast.success("2FA disabled.");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to disable 2FA");
@@ -184,6 +177,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 py-12 px-6">
+      {/* Profile Card */}
       <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-xl overflow-hidden">
         <div className="bg-gradient-to-r from-purple-600 to-blue-500 px-6 py-8 text-center text-white">
           <h1 className="text-3xl font-bold">👤 Profile</h1>
@@ -229,7 +223,6 @@ export default function Profile() {
               <span className="text-gray-500">Role:</span>
               <span className="font-medium">{user.role || "User"}</span>
             </div>
-
             <div className="flex justify-between border-b pb-2">
               <span className="text-gray-500">Two-Factor Auth:</span>
               <span className="font-medium">
@@ -283,7 +276,6 @@ export default function Profile() {
           <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
             <h2 className="text-xl font-bold mb-4">Enable 2FA</h2>
 
-            {/* Step 1: Choose method */}
             {!qrCode && !showVerifyStep && (
               <div className="space-y-4">
                 <button
@@ -307,15 +299,12 @@ export default function Profile() {
               </div>
             )}
 
-            {/* Step 2: Show QR + input code */}
             {qrCode && showVerifyStep && (
               <div className="text-center">
                 <p className="mb-2">Scan this QR in Google Authenticator:</p>
                 <img src={qrCode} alt="QR Code" className="mx-auto mb-4" />
                 <p className="text-sm text-gray-600">Or enter manually:</p>
-                <p className="font-mono text-sm bg-gray-100 p-2 rounded">
-                  {secret}
-                </p>
+                <p className="font-mono text-sm bg-gray-100 p-2 rounded">{secret}</p>
                 <input
                   type="text"
                   value={totpCode}
@@ -350,18 +339,14 @@ export default function Profile() {
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full p-3 border rounded-lg"
                 placeholder="Full Name"
               />
               <input
                 type="text"
                 value={formData.role}
-                onChange={(e) =>
-                  setFormData({ ...formData, role: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 className="w-full p-3 border rounded-lg"
                 placeholder="Role"
               />

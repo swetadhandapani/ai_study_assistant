@@ -12,26 +12,36 @@ export default function Navbar() {
   const userMenuRef = useRef(null);
   const mainMenuRef = useRef(null);
 
-  //Load user from localStorage on mount
+  // Normalize avatar URL
+  const normalizeAvatar = (u) => {
+    if (!u) return null;
+    if (u.avatar && !u.avatar.startsWith("http")) {
+      u.avatar = `${process.env.VITE_API_URL || "http://localhost:5000"}${u.avatar}`;
+    }
+    return u;
+  };
+
+  // Load user from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
-      setUser(JSON.parse(storedUser));
+      const parsed = normalizeAvatar(JSON.parse(storedUser));
+      setUser(parsed);
     }
   }, []);
 
-  //  Keep Navbar in sync with login/logout/2FA
+  // Keep Navbar in sync with login/logout/2FA/profile updates
   useEffect(() => {
     const syncUser = () => {
       const storedUser = localStorage.getItem("user");
       if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
-        setUser(JSON.parse(storedUser));
+        const parsed = normalizeAvatar(JSON.parse(storedUser));
+        setUser(parsed);
       } else {
         setUser(null);
       }
     };
 
-    // Trigger sync immediately after login or 2FA success
     window.addEventListener("storage", syncUser);
     window.addEventListener("userUpdated", syncUser);
 
@@ -41,7 +51,7 @@ export default function Navbar() {
     };
   }, []);
 
-  //  Close user menu on outside click
+  // Close user menu on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -54,7 +64,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [userMenuOpen]);
 
-  //  Close main menu on outside click
+  // Close main menu on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (mainMenuRef.current && !mainMenuRef.current.contains(event.target)) {
