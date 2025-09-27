@@ -5,14 +5,13 @@ const { Groq } = require("groq-sdk");
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// helper → always build file URL
-const buildFileUrl = (req, filePath) => {
-  if (!filePath) return null;
-  const filename = path.basename(filePath);
+// ✅ Helper → always build public file URL
+const buildFileUrl = (req, filename) => {
+  if (!filename) return null;
   return `${req.protocol}://${req.get("host")}/api/uploads/${filename}`;
 };
 
-// Upload + transcribe audio (initial upload)
+// ✅ Upload + transcribe audio (initial upload)
 exports.uploadAudio = async (req, res) => {
   try {
     if (!req.file) {
@@ -24,13 +23,16 @@ exports.uploadAudio = async (req, res) => {
       model: "whisper-large-v3",
     });
 
+    const filename = req.file.filename;
+
     const audioNote = new AudioNote({
       user: req.user._id,
       title: req.body.title || "Untitled Audio",
-      filePath: req.file.path,
-      fileUrl: buildFileUrl(req, req.file.path),
+      filePath: filename, // just filename
+      fileUrl: buildFileUrl(req, filename),
       transcription: transcription.text,
     });
+
     await audioNote.save();
 
     res.json(audioNote.toObject());
@@ -40,7 +42,7 @@ exports.uploadAudio = async (req, res) => {
   }
 };
 
-// Get all audio notes
+// ✅ Get all audio notes
 exports.getAudios = async (req, res) => {
   try {
     const audios = await AudioNote.find({ user: req.user._id }).sort({ createdAt: -1 });
@@ -56,7 +58,7 @@ exports.getAudios = async (req, res) => {
   }
 };
 
-// Get one audio note
+// ✅ Get one audio note
 exports.getAudio = async (req, res) => {
   try {
     const audio = await AudioNote.findById(req.params.id);
@@ -71,7 +73,7 @@ exports.getAudio = async (req, res) => {
   }
 };
 
-// Update title and optionally replace audio file
+// ✅ Update title and optionally replace audio file
 exports.updateAudio = async (req, res) => {
   try {
     const audio = await AudioNote.findById(req.params.id);
@@ -84,8 +86,15 @@ exports.updateAudio = async (req, res) => {
     if (req.body.title) audio.title = req.body.title;
 
     if (req.file) {
-      audio.filePath = req.file.path;
-      audio.fileUrl = buildFileUrl(req, req.file.path);
+      // remove old file if it exists
+      if (audio.filePath) {
+        const oldPath = path.join(__dirname, "..", "uploads", audio.filePath);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+
+      const filename = req.file.filename;
+      audio.filePath = filename;
+      audio.fileUrl = buildFileUrl(req, filename);
 
       try {
         const transcription = await groq.audio.transcriptions.create({
@@ -111,7 +120,7 @@ exports.updateAudio = async (req, res) => {
   }
 };
 
-// Delete audio note
+// ✅ Delete audio note + file cleanup
 exports.deleteAudio = async (req, res) => {
   try {
     const audio = await AudioNote.findById(req.params.id);
@@ -123,6 +132,14 @@ exports.deleteAudio = async (req, res) => {
       return res.status(401).json({ message: "Not authorized" });
     }
 
+    // remove physical file
+    if (audio.filePath) {
+      const filePath = path.join(__dirname, "..", "uploads", audio.filePath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
     await audio.deleteOne();
     res.json({ message: "Audio note deleted" });
   } catch (err) {
@@ -131,7 +148,7 @@ exports.deleteAudio = async (req, res) => {
   }
 };
 
-// Translate transcript into target language
+// ✅ Translate transcript into target language
 exports.translateTranscript = async (req, res) => {
   try {
     const { transcript, targetLang = "es" } = req.body;
