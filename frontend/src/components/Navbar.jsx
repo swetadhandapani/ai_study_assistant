@@ -13,12 +13,15 @@ export default function Navbar() {
   const mainMenuRef = useRef(null);
 
   // Normalize avatar URL
-  const normalizeAvatar = (u) => {
-    if (!u) return null;
-    if (u.avatar && !u.avatar.startsWith("http")) {
-      u.avatar = `${process.env.VITE_API_URL || "http://localhost:5000"}${u.avatar}`;
+  const normalizeAvatar = (userObj) => {
+    if (!userObj) return null;
+    let avatar = userObj.avatar;
+    if (avatar && !avatar.startsWith("http")) {
+      avatar = `${process.env.VITE_API_URL || "http://localhost:5000"}${
+        avatar.startsWith("/") ? "" : "/"
+      }${avatar}`;
     }
-    return u;
+    return { ...userObj, avatar };
   };
 
   // Load user from localStorage on mount

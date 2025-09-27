@@ -617,14 +617,14 @@ exports.updateProfile = async (req, res) => {
   try {
     const { name, role, avatar } = req.body;
     const userId = req.user.id;
+    const BASE_URL = process.env.CLIENT_URL || "https://ai-study-assistant-pumn.onrender.com";
 
     const updateData = {};
     if (name) updateData.name = name;
     if (role) updateData.role = role;
 
-    // Handle avatar updates
-    if (req.file) {
-      updateData.avatar = `/api/uploads/${req.file.filename}`;
+    if (req.file && req.file.filename) {
+      updateData.avatar = `${BASE_URL}/api/uploads/${req.file.filename}`;
     } else if (avatar === null || avatar === "null") {
       updateData.avatar = null;
     } else if (avatar) {
@@ -634,6 +634,11 @@ exports.updateProfile = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
     }).select("-password");
+
+    // Ensure avatar has full URL
+    if (updatedUser.avatar && !updatedUser.avatar.startsWith("http")) {
+      updatedUser.avatar = `${BASE_URL}${updatedUser.avatar}`;
+    }
 
     res.json({ message: "Profile updated successfully", user: updatedUser });
   } catch (err) {

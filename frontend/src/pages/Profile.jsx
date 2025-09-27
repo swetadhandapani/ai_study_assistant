@@ -22,12 +22,15 @@ export default function Profile() {
     avatarName: "",
   });
 
-  const normalizeAvatar = (u) => {
-    if (!u) return null;
-    if (u.avatar && !u.avatar.startsWith("http")) {
-      u.avatar = `${process.env.VITE_API_URL || "http://localhost:5000"}${u.avatar}`;
+  const normalizeAvatar = (userObj) => {
+    if (!userObj) return null;
+    let avatar = userObj.avatar;
+    if (avatar && !avatar.startsWith("http")) {
+      avatar = `${process.env.VITE_API_URL || "http://localhost:5000"}${
+        avatar.startsWith("/") ? "" : "/"
+      }${avatar}`;
     }
-    return u;
+    return { ...userObj, avatar };
   };
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export default function Profile() {
       const updatedUser = normalizeAvatar(res.data.user);
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
+      window.dispatchEvent(new Event("userUpdated"));
       window.dispatchEvent(new Event("storage")); // Sync Navbar
       toast.success("Profile updated!");
       setIsEditing(false);
