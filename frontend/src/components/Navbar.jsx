@@ -12,7 +12,7 @@ export default function Navbar() {
   const userMenuRef = useRef(null);
   const mainMenuRef = useRef(null);
 
-  // Normalize avatar URL
+  // ✅ Normalize avatar URL
   const normalizeAvatar = (userObj) => {
     if (!userObj) return null;
     let avatar = userObj.avatar;
@@ -24,22 +24,20 @@ export default function Navbar() {
     return { ...userObj, avatar };
   };
 
-  // Load user from localStorage on mount
+  // ✅ Load user on mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
-      const parsed = normalizeAvatar(JSON.parse(storedUser));
-      setUser(parsed);
+      setUser(normalizeAvatar(JSON.parse(storedUser)));
     }
   }, []);
 
-  // Keep Navbar in sync with login/logout/2FA/profile updates
+  // ✅ Sync with login/logout/profile updates
   useEffect(() => {
     const syncUser = () => {
       const storedUser = localStorage.getItem("user");
       if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
-        const parsed = normalizeAvatar(JSON.parse(storedUser));
-        setUser(parsed);
+        setUser(normalizeAvatar(JSON.parse(storedUser)));
       } else {
         setUser(null);
       }
@@ -54,7 +52,7 @@ export default function Navbar() {
     };
   }, []);
 
-  // Close user menu on outside click
+  // ✅ Close user menu on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -67,7 +65,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [userMenuOpen]);
 
-  // Close main menu on outside click
+  // ✅ Close main menu on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (mainMenuRef.current && !mainMenuRef.current.contains(event.target)) {
@@ -80,6 +78,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
 
+  // ✅ Logout clears localStorage and syncs UI
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -90,11 +89,13 @@ export default function Navbar() {
 
   const isVerified = user?.isVerified;
 
+  // ⚠️ Temporary warning popup
   const showWarning = (message) => {
     setWarning(message);
     setTimeout(() => setWarning(null), 5000);
   };
 
+  // ✅ Prevent unverified users from accessing pages
   const handleProtectedClick = (e, page) => {
     if (!user) {
       e.preventDefault();

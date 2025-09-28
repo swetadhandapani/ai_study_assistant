@@ -1,3 +1,4 @@
+// frontend/src/pages/Profile.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axiosInstance";
@@ -22,6 +23,7 @@ export default function Profile() {
     avatarName: "",
   });
 
+  // ---------- Normalize avatar helper ----------
   const normalizeAvatar = (userObj) => {
     if (!userObj) return null;
     let avatar = userObj.avatar;
@@ -33,6 +35,7 @@ export default function Profile() {
     return { ...userObj, avatar };
   };
 
+  // ---------- Load Profile ----------
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
@@ -87,7 +90,7 @@ export default function Profile() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const updatedUser = res.data.user;
+      const updatedUser = normalizeAvatar(res.data.user);
       updatedUser.avatar = null;
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -109,8 +112,9 @@ export default function Profile() {
           { enable: true, method: "email" },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-        setUser(res.data.user);
+        const updatedUser = normalizeAvatar(res.data.user);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
         toast.success("📧 Email OTP 2FA enabled!");
         setShow2FAModal(false);
       } else if (method === "totp") {
@@ -139,8 +143,9 @@ export default function Profile() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setUser(res.data.user);
+      const updatedUser = normalizeAvatar(res.data.user);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
       window.dispatchEvent(new Event("storage")); // Sync Navbar
       toast.success("🔑 Authenticator App 2FA enabled!");
       setShow2FAModal(false);
@@ -162,8 +167,9 @@ export default function Profile() {
         { enable: false },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setUser(res.data.user);
+      const updatedUser = normalizeAvatar(res.data.user);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
       window.dispatchEvent(new Event("storage")); // Sync Navbar
       toast.success("2FA disabled.");
     } catch (err) {

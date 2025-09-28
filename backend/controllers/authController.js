@@ -6,6 +6,7 @@ const qrcode = require("qrcode");
 const sgMail = require("@sendgrid/mail");
 const { body, validationResult } = require("express-validator");
 const User = require("../models/User");
+const formatUser = require("../utils/formatUser");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -154,16 +155,8 @@ exports.login = async (req, res) => {
 
     // No 2FA
     res.json({
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        isVerified: user.isVerified,
-        avatar: user.avatar || null,
-        role: user.role,
-        is2FAEnabled: user.is2FAEnabled,
-        twoFactorMethod: user.twoFactorMethod || null,
-      },
+      message: "✅ Logged in successfully",
+      user: formatUser(user),
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -291,14 +284,7 @@ exports.verifyEmail = async (req, res) => {
     return res.json({
       success: true,
       message: "✅ Email verified successfully! You are now logged in.",
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        isVerified: true,
-        role: user.role,
-        avatar: user.avatar || null,
-      },
+      user: formatUser(user),
       token: jwtToken,
     });
   } catch (err) {
@@ -394,16 +380,8 @@ exports.verify2FA = async (req, res) => {
     await user.save();
 
     res.json({
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        isVerified: user.isVerified,
-        avatar: user.avatar || null,
-        role: user.role,
-        is2FAEnabled: user.is2FAEnabled,
-        twoFactorMethod: user.twoFactorMethod,
-      },
+      message: "✅ 2FA verified successfully",
+      user: formatUser(user),
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -481,7 +459,7 @@ exports.toggle2FA = async (req, res) => {
       message: `2FA ${enable ? "enabled" : "disabled"} via ${
         user.twoFactorMethod || "none"
       }`,
-      user,
+      user: formatUser(user),
     });
   } catch (err) {
     res
@@ -550,16 +528,8 @@ exports.verifyTOTP = async (req, res) => {
     await user.save();
 
     return res.json({
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        isVerified: user.isVerified,
-        avatar: user.avatar || null,
-        role: user.role,
-        is2FAEnabled: user.is2FAEnabled,
-        twoFactorMethod: user.twoFactorMethod,
-      },
+      message: "✅ TOTP verified successfully",
+      user: formatUser(user),
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -589,8 +559,10 @@ exports.confirmTOTPSetup = async (req, res) => {
     user.is2FAEnabled = true;
     user.twoFactorMethod = "totp";
     await user.save();
-
-    res.json({ message: "✅ TOTP setup confirmed successfully!", user });
+    res.json({
+      message: "✅ TOTP setup confirmed successfully!",
+      user: formatUser(user),
+    });
   } catch (err) {
     res
       .status(500)
@@ -604,7 +576,7 @@ exports.confirmTOTPSetup = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    res.json({ user });
+    res.json({ user: formatUser(user) });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch profile" });
   }
@@ -617,7 +589,8 @@ exports.updateProfile = async (req, res) => {
   try {
     const { name, role, avatar } = req.body;
     const userId = req.user.id;
-    const BASE_URL = process.env.CLIENT_URL || "https://ai-study-assistant-pumn.onrender.com";
+    const BASE_URL =
+      process.env.CLIENT_URL || "https://ai-study-assistant-pumn.onrender.com";
 
     const updateData = {};
     if (name) updateData.name = name;
@@ -639,8 +612,10 @@ exports.updateProfile = async (req, res) => {
     if (updatedUser.avatar && !updatedUser.avatar.startsWith("http")) {
       updatedUser.avatar = `${BASE_URL}${updatedUser.avatar}`;
     }
-
-    res.json({ message: "Profile updated successfully", user: updatedUser });
+    res.json({
+      message: "Profile updated successfully",
+      user: formatUser(updatedUser),
+    });
   } catch (err) {
     console.error("Update profile error:", err);
     res.status(500).json({ message: "Update failed", error: err.message });

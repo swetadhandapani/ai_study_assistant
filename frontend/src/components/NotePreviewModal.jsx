@@ -21,7 +21,10 @@ export default function NotePreviewModal({ note, onClose }) {
           <h2 className="text-base sm:text-lg font-bold text-indigo-700 truncate">
             📖 {note.title || "Untitled Note"}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-red-500">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-red-500"
+          >
             <FiX size={22} />
           </button>
         </div>
@@ -48,6 +51,7 @@ export default function NotePreviewModal({ note, onClose }) {
               {isPDF ? (
                 <iframe
                   src={fileUrl}
+                  sandbox="allow-same-origin allow-scripts allow-popups"
                   className="w-full min-h-[400px] sm:min-h-[500px] h-[70vh]"
                   title="PDF Preview"
                 />
@@ -59,7 +63,9 @@ export default function NotePreviewModal({ note, onClose }) {
                 />
               ) : isOffice ? (
                 <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(
+                    fileUrl
+                  )}&embedded=true`}
                   className="w-full min-h-[400px] sm:min-h-[500px] h-[70vh]"
                   title="Google Docs Preview"
                 />
