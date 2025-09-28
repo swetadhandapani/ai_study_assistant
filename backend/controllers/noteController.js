@@ -11,7 +11,7 @@ exports.uploadNote = async (req, res) => {
 
     if (req.file) {
       const filePath = req.file.path;
-      fileUrl = `api/uploads/${req.file.filename}`;
+      fileUrl = `/uploads/${req.file.filename}`; // ✅ always no /api
 
       try {
         if (filePath.endsWith(".pdf")) {
@@ -47,6 +47,43 @@ exports.uploadNote = async (req, res) => {
   }
 };
 
+// ✅ update note
+exports.updateNote = async (req, res) => {
+  try {
+    const note = await Note.findOne({ _id: req.params.id, user: req.user._id });
+    if (!note) return res.status(404).json({ message: "Note not found" });
+
+    let text = req.body.text || note.originalText;
+
+    if (req.file) {
+      const filePath = req.file.path;
+      note.fileUrl = `/uploads/${req.file.filename}`; // ✅ fixed (no "api")
+
+      try {
+        if (filePath.endsWith(".pdf")) {
+          text += "\n" + (await extractTextFromPDF(filePath));
+        } else if (filePath.endsWith(".docx")) {
+          text += "\n" + (await extractTextFromDocx(filePath));
+        } else if (filePath.endsWith(".pptx")) {
+          text += "\n" + (await extractTextFromPpt(filePath));
+        }
+      } catch (err) {
+        console.error("Extraction failed:", err);
+      }
+    }
+
+    note.title = req.body.title || note.title;
+    note.originalText = text;
+    await note.save();
+
+    res.json(note);
+  } catch (err) {
+    console.error("Error in updateNote:", err);
+    res.status(500).json({ message: "Server error while updating note" });
+  }
+};
+
+
 // ✅ get all notes
 exports.getNotes = async (req, res) => {
   try {
@@ -72,41 +109,6 @@ exports.getNoteById = async (req, res) => {
   }
 };
 
-// ✅ update note
-exports.updateNote = async (req, res) => {
-  try {
-    const note = await Note.findOne({ _id: req.params.id, user: req.user._id });
-    if (!note) return res.status(404).json({ message: "Note not found" });
-
-    let text = req.body.text || note.originalText;
-
-    if (req.file) {
-      const filePath = req.file.path;
-      note.fileUrl = `api/uploads/${req.file.filename}`;
-
-      try {
-        if (filePath.endsWith(".pdf")) {
-          text += "\n" + (await extractTextFromPDF(filePath));
-        } else if (filePath.endsWith(".docx")) {
-          text += "\n" + (await extractTextFromDocx(filePath));
-        } else if (filePath.endsWith(".pptx")) {
-          text += "\n" + (await extractTextFromPpt(filePath));
-        }
-      } catch (err) {
-        console.error("Extraction failed:", err);
-      }
-    }
-
-    note.title = req.body.title || note.title;
-    note.originalText = text;
-    await note.save();
-
-    res.json(note);
-  } catch (err) {
-    console.error("Error in updateNote:", err);
-    res.status(500).json({ message: "Server error while updating note" });
-  }
-};
 
 // ✅ delete note
 exports.deleteNote = async (req, res) => {

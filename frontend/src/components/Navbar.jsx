@@ -17,7 +17,7 @@ export default function Navbar() {
     if (!userObj) return null;
     let avatar = userObj.avatar;
     if (avatar && !avatar.startsWith("http")) {
-      avatar = `${process.env.VITE_API_URL || "http://localhost:5000"}${
+      avatar = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}${
         avatar.startsWith("/") ? "" : "/"
       }${avatar}`;
     }

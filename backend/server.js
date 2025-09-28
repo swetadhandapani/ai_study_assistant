@@ -11,7 +11,11 @@ if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
 connectDB();
 const app = express();
 
-app.use(cors());
+const corsOptions = {
+  origin: process.env.CLIENT_URL,
+  credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // ✅ serve uploads folder so frontend can access file previews
