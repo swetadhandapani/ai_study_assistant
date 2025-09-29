@@ -1,1 +1,0 @@
-# ai_study_assistant

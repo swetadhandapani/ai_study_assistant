@@ -1,9 +1,9 @@
 import React from "react";
 import { FiX } from "react-icons/fi";
 
-const BASE_URL = import.meta.env.VITE_API_URL.startsWith("http")
+const BASE_URL = import.meta.env.VITE_API_URL?.startsWith("http")
   ? import.meta.env.VITE_API_URL.replace(/\/api$/, "")
-  : window.location.origin; // fallback for relative "/api"
+  : window.location.origin;
 
 export default function NotePreviewModal({ note, onClose }) {
   if (!note) return null;
@@ -16,6 +16,7 @@ export default function NotePreviewModal({ note, onClose }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-2 sm:px-4">
       <div className="bg-white rounded-lg shadow-lg w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 max-h-[90vh] flex flex-col">
+        
         {/* Header */}
         <div className="flex justify-between items-center p-3 sm:p-4 border-b">
           <h2 className="text-base sm:text-lg font-bold text-indigo-700 truncate">
@@ -31,6 +32,7 @@ export default function NotePreviewModal({ note, onClose }) {
 
         {/* Content */}
         <div className="p-3 sm:p-4 overflow-y-auto flex-1">
+          {/* Extracted Text */}
           {note.originalText && (
             <div className="mb-4">
               <h3 className="font-semibold text-indigo-600 mb-2 text-sm sm:text-base">
@@ -42,6 +44,7 @@ export default function NotePreviewModal({ note, onClose }) {
             </div>
           )}
 
+          {/* File Preview */}
           {fileUrl && (
             <div className="mb-4">
               <h3 className="font-semibold text-indigo-600 mb-2 text-sm sm:text-base">
@@ -49,26 +52,64 @@ export default function NotePreviewModal({ note, onClose }) {
               </h3>
 
               {isPDF ? (
-                <iframe
-                  src={fileUrl}
-                  sandbox="allow-same-origin allow-scripts allow-popups"
-                  className="w-full min-h-[400px] sm:min-h-[500px] h-[70vh]"
-                  title="PDF Preview"
-                />
+                <div className="w-full border rounded overflow-hidden">
+                  <iframe
+                    src={fileUrl}
+                    sandbox="allow-same-origin allow-scripts allow-popups"
+                    className="w-full min-h-[400px] sm:min-h-[500px] h-[70vh]"
+                    style={{ display: "block" }}
+                    title="PDF Preview"
+                  />
+                  <div className="text-center mt-2">
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      📥 Open PDF in New Tab
+                    </a>
+                  </div>
+                </div>
               ) : isImage ? (
-                <img
-                  src={fileUrl}
-                  alt="Uploaded file"
-                  className="w-full max-h-[400px] sm:max-h-[500px] object-contain rounded-md shadow"
-                />
+                <div className="text-center">
+                  <img
+                    src={fileUrl}
+                    alt="Uploaded file"
+                    className="w-full max-h-[400px] sm:max-h-[500px] object-contain rounded-md shadow"
+                  />
+                  <div className="mt-2">
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      📥 Download Image
+                    </a>
+                  </div>
+                </div>
               ) : isOffice ? (
-                <iframe
-                  src={`https://docs.google.com/viewer?url=${encodeURIComponent(
-                    fileUrl
-                  )}&embedded=true`}
-                  className="w-full min-h-[400px] sm:min-h-[500px] h-[70vh]"
-                  title="Google Docs Preview"
-                />
+                <div className="w-full border rounded overflow-hidden">
+                  <iframe
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(
+                      fileUrl
+                    )}&embedded=true`}
+                    className="w-full min-h-[400px] sm:min-h-[500px] h-[70vh]"
+                    style={{ display: "block" }}
+                    title="Google Docs Preview"
+                  />
+                  <div className="text-center mt-2">
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
+                    >
+                      📥 Open File in New Tab
+                    </a>
+                  </div>
+                </div>
               ) : (
                 <a
                   href={fileUrl}
@@ -77,7 +118,7 @@ export default function NotePreviewModal({ note, onClose }) {
                   download
                   className="text-blue-600 underline break-all"
                 >
-                  Download {note.fileUrl.split("/").pop()}
+                  📥 Download {note.fileUrl.split("/").pop()}
                 </a>
               )}
             </div>
